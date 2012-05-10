@@ -139,6 +139,7 @@ class JsRoutes
     parent_spec = parent_route.try(:path).try(:spec)
     _ = <<-JS.strip!
   // #{name.join('.')} => #{parent_spec}#{route.path.spec}
+  #{name.join('_')}_components: #{json(route.required_parts)},
   #{name.join('_')}_path: function(#{build_params(route)}) {
   return Utils.build_path(#{json(route.required_parts)}, #{json(serialize(route.path.spec, parent_spec))}, arguments);
   }
