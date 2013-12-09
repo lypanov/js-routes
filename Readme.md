@@ -1,4 +1,5 @@
 # JsRoutes
+[![Build Status](https://travis-ci.org/railsware/js-routes.png)](https://travis-ci.org/railsware/js-routes)
 
 Generates javascript file that defines all Rails named routes as javascript helpers
 
@@ -20,7 +21,19 @@ Require js routes file in `application.js` or other bundle
 */
 ```
 
-**Optional**: If you need to customize routes file create initializer, like `config/initializers/jsroutes.rb`:
+Also in order to flush asset pipeline cache sometimes you might need to run:
+
+``` sh
+rake tmp:cache:clear
+```
+
+This cache is not flushed on server restart in development environment.
+
+**Important:** If routes.js file is not updated after some configuration change you need to run this rake task again.
+
+### Advanced Setup
+
+If you need to customize routes file create initializer, like `config/initializers/jsroutes.rb`:
 
 ``` ruby
 JsRoutes.setup do |config|
@@ -30,23 +43,39 @@ end
 
 Available options:
 
-* `default_format` - Format to append to urls. Default: blank
-* `exclude` - Array of regexps to exclude from js routes. Default: []
-  * Note that regexp applied to **named route** not to *URL*
-* `include` - Array of regexps to include in js routes. Default: []
-  * Note that regexp applied to **named route** not to *URL*
-* `namespace` - global object used to access routes. Default: `Routes`
+* `default_url_options` - default parameters to be used to generate url
+  * Note that currently only optional parameters (like `:format`) can be defaulted.
+  * Example: {:format => "json"}
+  * Default: {}
+* `exclude` - Array of regexps to exclude from js routes.
+  * Default: []
+  * The regexp applies only to the name before the `_path` suffix, eg: you want to match exactly `settings_path`, the regexp should be `/^settings$/`
+* `include` - Array of regexps to include in js routes.
+  * Default: []
+  * The regexp applies only to the name before the `_path` suffix, eg: you want to match exactly `settings_path`, the regexp should be `/^settings$/`
+* `namespace` - global object used to access routes.
   * Supports nested namespace like `MyProject.routes`
-* `prefix` - String representing a url path to prepend to all paths. Default: blank
+  * Default: `Routes`
+* `prefix` - String representing a url path to prepend to all paths.
+  * Example: `http://yourdomain.com`. This will cause route helpers to generate full path only.
+  * Default: blank
+* `camel_case` (version >= 0.8.8) - Generate camel case route names.
+  * Default: false
+* `url_links` (version >= 0.8.9) - Generate `*_url` links (in addition to default `*_path`), where url_links value is beginning of url routes
+  * Example: http[s]://example.com
+  * Default: false
 
+### Very Advanced Setup
 
-### Advanced Setup
+In case you need multiple route files for different parts of your application, you can not use asset pipeline.
 
-You can generate routes files on the application side like this:
+You need to generate routes files on the application side like this:
 
 ``` ruby
-JsRoutes.generate!("#{path}/app_routes.js", :namespace => "AppRoutes", :exclude => /^admin_/, :default_format => "json")
-JsRoutes.generate!("#{path}/adm_routes.js", :namespace => "AdmRoutes", :include => /^admin_/, :default_format => "json")
+path = "app/assets/javascripts"
+JsRoutes.generate!("#{path}/app_routes.js", :namespace => "AppRoutes", :exclude => [/^admin_/, /^api_/])
+JsRoutes.generate!("#{path}/adm_routes.js", :namespace => "AdmRoutes", :include => /^admin_/)
+JsRoutes.generate!("#{path}/api_routes.js", :namespace => "ApiRoutes", :include => /^api_/, :default_url_options => {:format => "json"})
 ```
 
 In order to generate javascript to string and manipulate them yourself use:
@@ -86,7 +115,7 @@ jQuery.extend(window, Routes)
 
 ## What about security?
 
-js-routes itself do not have security holes. It makes URLs 
+js-routes itself do not have security holes. It makes URLs
 without access protection more reachable by potential attacker.
 In order to prevent this use `:exclude` option for sensitive urls like `/admin_/`
 
@@ -100,14 +129,14 @@ Spork.trap_method(JsRoutes, :generate!)
 
 ## Advantages over alternatives
 
-There are some alternatives available. Most of them has only basic feature and don't reach the level of quality I accept. 
+There are some alternatives available. Most of them has only basic feature and don't reach the level of quality I accept.
 Advantages of this one are:
 
-* Rails3 support
+* Rails3 & Rails4 support
 * Rich options set
 * Support Rails `#to_param` convention for seo optimized paths
 * Well tested
 
 #### Thanks to [Contributors](https://github.com/railsware/js-routes/contributors)
 
-#### Have fun 
+#### Have fun
